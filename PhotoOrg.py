@@ -15,10 +15,25 @@ random.shuffle(image_files)
 # Create a list of existing destination folders
 existing_destination_folders = [folder_name for folder_name in os.listdir(destination_root) if os.path.isdir(os.path.join(destination_root, folder_name))]
 
-# Iterate over each folder and move 25 random images
-for folder_name in existing_destination_folders:
-    folder = os.path.join(destination_root, folder_name)
+# Introduction
+print("Welcome to the Image Distribution Script!")
+print(f"We have {len(image_files)} images to distribute.")
+print(f"We have {len(existing_destination_folders)} existing folders in the destination root.")
 
+# Function to create a new folder
+def create_new_folder():
+    new_folder_count = 1
+    while True:
+        new_folder_name = f"MachineCreated_{new_folder_count}"
+        if new_folder_name not in existing_destination_folders:
+            new_folder_path = os.path.join(destination_root, new_folder_name)
+            os.makedirs(new_folder_path)
+            existing_destination_folders.append(new_folder_name)
+            return new_folder_path
+        new_folder_count += 1
+
+# Iterate over each image and move to the next available folder
+while image_files:
     if len(image_files) >= 3:
         images_to_move = image_files[:3]
         image_files = image_files[3:]
@@ -26,20 +41,29 @@ for folder_name in existing_destination_folders:
         images_to_move = image_files
         image_files = []
 
-    # Move images to the destination folder
-    if images_to_move:
-        for image in images_to_move:
-            source_path = os.path.join(source_folder, image)
-            destination_path = os.path.join(folder, image)
-
-            # Skip files that are not valid images
-            try:
-                shutil.move(source_path, destination_path)
-            except IsADirectoryError:
-                print(f"Skipping {source_path} as it is not a valid image.")
-
-        print(f"Moved {len(images_to_move)} images to {folder}")
+    if not existing_destination_folders:
+        # Create a new folder if none exist
+        new_folder_path = create_new_folder()
     else:
-        print(f"No images to move to {folder}")
+        # Use the next available folder
+        new_folder_path = os.path.join(destination_root, existing_destination_folders.pop(0))
 
-print("All images moved.")
+    # Move images to the destination folder
+    for image in images_to_move:
+        source_path = os.path.join(source_folder, image)
+        destination_path = os.path.join(new_folder_path, image)
+
+        # Skip files that are not valid images
+        try:
+            shutil.move(source_path, destination_path)
+        except IsADirectoryError:
+            print(f"Skipping {source_path} as it is not a valid image.")
+
+    print(f"Moved {len(images_to_move)} images to {new_folder_path}")
+final_destination_folders = [folder_name for folder_name in os.listdir(destination_root) if os.path.isdir(os.path.join(destination_root, folder_name))]
+# Conclusion
+print("Distribution complete!")
+print(f"There are {len(image_files)} images remaining.")
+print(f"There are {len(final_destination_folders)} folders in the destination root.")
+
+# End of script
